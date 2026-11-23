@@ -1,0 +1,9 @@
+{
+  "split": ["lock toward sword"],
+  "calibur": ["lock away", "lock toward sword"],
+  "snatch": ["lock bringer"],
+  "jc": ["lock jump"],
+  "jumpToward": ["toward jump"],
+  "toward": ["toward"],
+  "lock": ["lock"]
+}

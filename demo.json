@@ -1,0 +1,7 @@
+{
+  "batch": 6, "prefix": 86, "lockLead": 3, "hold": 2, "snatchWait": 43, "jumpTravel": 9,
+  "afterStep": 9, "caliburWait": 45, "splitWait": 21, "attackWindow": 36,
+  "jcWindow": 12, "splitJcWindow": 6, "jcLatency": 8, "tail": 40,
+  "angleLimit": 40, "turnTolerance": 6, "degreesPerFrame": 1.8, "turnLimit": 14,
+  "negativeTurn": "LeftShift", "positiveTurn": "F"
+}
