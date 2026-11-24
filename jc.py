@@ -10,17 +10,20 @@ AFTER_PRESS = 8      # frames after the press in which the step has to start
 HOLD = 2             # frames the jump key is held, as in the demo
 MAX_FRAMES = 60
 FIELDS = ["frame", "combat.player.pointer", "combat.player.action", "combat.player.motion",
-          "combat.player.motionFrame", "combat.stepCheck", "hits"]
+          "combat.stepCheck", "hits"]
 
 
 def with_jump(base, press, jump):
     return [f"{row} {jump}".strip() if press <= i < press + HOLD else row for i, row in enumerate(base)]
 
 
-def is_step(frame, table):
-    return (frame["combat.player.action"] == table["action"]["enemyStep"]
-            and frame["combat.player.motion"] in table["motion"]["enemyStep"]
-            and frame["combat.player.motionFrame"] == 0)
+def step_starts(trace, table):
+    """Frames on which an Enemy Step begins. Its first motion time differs by build (0 on SE, 1.2 on
+    DX9), so the start is where the action becomes the step's."""
+    step = table["action"]["enemyStep"]
+    return {j for j, frame in enumerate(trace)
+            if frame["combat.player.action"] == step and frame["combat.player.motion"] in table["motion"]["enemyStep"]
+            and (j == 0 or trace[j - 1]["combat.player.action"] != step)}
 
 
 def judged(frame):
@@ -47,7 +50,7 @@ def jc_points(first, last, verify):
     if verify:
         jump = call("status")["last"]["keys"]["controls"]["jump"]
         tries = call("probe", candidates=[with_jump(base, i, jump) for i in range(count)], **window)
+        already = step_starts(observed, table)
         for i, (point, trace) in enumerate(zip(points, tries)):
-            point["steps"] = any(is_step(trace[j], table) and not is_step(observed[j], table)
-                                 for j in range(i, i + AFTER_PRESS + 1))
+            point["steps"] = any(j in range(i, i + AFTER_PRESS + 1) for j in step_starts(trace, table) - already)
     return points
