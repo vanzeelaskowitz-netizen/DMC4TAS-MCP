@@ -33,7 +33,8 @@ async def test_stdio(root, controls):
     async with stdio_client(params) as (reader, writer), ClientSession(reader, writer) as session:
         await session.initialize()
         names = {t.name for t in (await session.list_tools()).tools}
-        assert names == {"status", "navigate", "move", "probe", "motions", "practice", "script", "video", "jc_points"}
+        assert names == {"status", "navigate", "move", "probe", "motions", "practice", "script", "video", "jc_points",
+                         "positions"}
         assert (await session.read_resource("tas://combo-rules")).contents
         step = await session.call_tool("move", {"name": "calibur"})
         assert not step.isError and step.structuredContent["result"] == rows("calibur", 0, controls)
@@ -45,7 +46,11 @@ async def test_stdio(root, controls):
         points = (await session.call_tool("jc_points", {"first": 9, "last": 12})).structuredContent["result"]
         assert [(p["frame"], p["can"], p["afterHit"], p["steps"]) for p in points] == [
             (9, [], False, False), (10, ["E"], False, False), (11, ["E"], True, True), (12, [], True, False)]
-        print("stdio initialize/list/call, 9 tools, combo resource, fake TCP, script write and jc_points passed")
+        where = (await session.call_tool("positions", {"first": 3, "last": 4})).structuredContent["result"]
+        assert where == [{"frame": f, "player": {"position": [0, 30 + f, 0], "ground": 8.5, "landed": False},
+                          "enemies": [{"pointer": "E", "type": "uEm001", "position": [5, 0, 0], "ground": 0.0,
+                                       "landed": True}]} for f in (3, 4)]
+        print("stdio initialize/list/call, 10 tools, combo resource, fake TCP, script write, jc_points and positions passed")
 
 
 def fake_jc_probe(args):
@@ -86,6 +91,11 @@ def main():
         if command == "timeline-keys":
             return [[] for _ in range(args["first"], args["last"] + 1)]
         assert command == "probe"
+        if args["fields"] == ["frame", "combat.player", "combat.enemies"]:
+            enemy = {"pointer": "E", "type": "uEm001", "position": [5, 0, 0], "ground": 0.0, "landed": True, "hp": 1}
+            return [[{"frame": f, "combat.player": {"position": [0, 30 + f, 0], "ground": 8.5, "landed": False,
+                                                     "hp": 1}, "combat.enemies": [enemy]}
+                     for f in range(args["first"], args["last"] + 1)]]
         if args["candidates"] != [["J"], []]:
             return fake_jc_probe(args)
         return [[{"frame": f} for f in range(args["first"], args["last"]+1)] for _ in args["candidates"]]

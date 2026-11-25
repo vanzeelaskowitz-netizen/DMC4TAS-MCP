@@ -8,6 +8,7 @@ from mcp.server.fastmcp import FastMCP
 from client import call
 from jc import jc_points as find_jc_points
 from moves import rows
+from positions import positions as find_positions
 from record_video import record
 
 mcp = FastMCP("DMC4 TAS", instructions="Read tas://combo-rules before searching combos. Probe preserves the paused timeline.")
@@ -50,6 +51,15 @@ def jc_points(first: int, last: int, verify: bool = True) -> list[dict]:
     earlier in the range (afterHit), and with verify whether pressing jump there really starts an
     Enemy Step (steps). For a JC that keeps the damage, pick a frame with steps and afterHit."""
     return find_jc_points(first, last, verify)
+
+
+@mcp.tool()
+def positions(first: int, last: int) -> list[dict]:
+    """Per frame of the loaded timeline (at most 600): world position, floor height below (ground)
+    and landed flag for Nero and each enemy. Y is up. ground/landed exist on the original build
+    only; Nero's ground is None more than 100 above the floor, an enemy's within 10000 below. The
+    paused timeline is left as it was."""
+    return find_positions(first, last)
 
 
 @mcp.tool()
